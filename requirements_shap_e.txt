@@ -1,0 +1,13 @@
+-r requirements_base.txt
+torch>=2.1
+Pillow
+filelock
+fire
+humanize
+requests
+tqdm
+scikit-image
+blobfile
+PyYAML
+ipywidgets
+clip @ git+https://github.com/openai/CLIP.git

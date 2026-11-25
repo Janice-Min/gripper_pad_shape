@@ -1,0 +1,12 @@
+{
+  "candidate_id": "pad_flat",
+  "source": "flat_baseline",
+  "source_signature": "75de6524301e3ee33680f578a92360e90f77b86b59b7be4eea130f00a68a1e9c",
+  "one_pad_volume_m3": 1.5077055e-06,
+  "one_pad_mass_kg": 0.00165847605,
+  "min_thickness_mm": 3.5,
+  "max_thickness_mm": 3.5,
+  "pad_length_mm": 30.7695,
+  "pad_width_mm": 14.0,
+  "collision_parts_per_pad": 96
+}

@@ -1,0 +1,9 @@
+﻿candidate_id,suite,object_name,repeat,initial_penetration_mm,success,contact_fraction,pad_contact_fraction,max_drift_mm,max_rotation_deg,mean_normal_force_N,max_tendon_force_N,floor_contact,fixture_released,object_x_m,object_y_m,object_yaw_deg,status
+pad_flat,train,cylinder_r18,0,0.0,0,0.0,0.0,177.35914710271572,128.59663041192823,0.0,10.0,1,1,-0.075,0.0,0.0,ok
+pad_flat,train,cylinder_r24,0,0.0,0,0.0,0.0,310.25702914572764,179.97843613458332,0.0,10.0,1,1,-0.075,0.0,0.0,ok
+pad_flat,train,cylinder_r30,0,0.0,0,1.0,1.0,9.767085495232351,5.032471612411102,14.373282229443063,10.0,0,1,-0.075,0.0,0.0,ok
+pad_flat,train,sphere_r22,0,0.0,1,1.0,1.0,1.9170669799425823,0.0,5.037437140941227,10.0,0,1,-0.075,0.0,0.0,ok
+pad_flat,train,box_36x28,0,0.0,1,1.0,0.0,1.854742046312978,2.0891923109420425,3.6122102872669246,10.0,0,1,-0.075,0.0,0.0,ok
+pad_flat,train,box_50x36,0,0.0,1,1.0,0.0,1.325421684036455,3.004449483307849,3.3759352449355537,10.0,0,1,-0.075,0.0,0.0,ok
+pad_flat,train,ellipsoid_52x36,0,0.0,1,1.0,0.9310344827586207,4.512565776450372,10.522575956802026,3.80276385996461,10.0,0,1,-0.075,0.0,0.0,ok
+pad_flat,train,capsule_r15,0,0.0,0,0.0,0.0,177.0488511203566,144.420966945458,0.0,10.0,1,1,-0.075,0.0,0.0,ok

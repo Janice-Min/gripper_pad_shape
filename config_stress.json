@@ -1,0 +1,193 @@
+{
+  "base_xml": "assets/design0009.xml",
+  "output_dir": "runs",
+  "shap_e_dir": "../shap-e/shap-e-main_from_johnson/shap-e-main",
+  "cache_dir": "model_cache",
+  "pad": {
+    "joint_margin_mm": 5.0,
+    "tip_margin_mm": 5.0,
+    "width_mm": 14.0,
+    "thickness_min_mm": 1.5,
+    "thickness_max_mm": 5.5,
+    "embed_mm": 0.15,
+    "cells_length": 12,
+    "cells_width": 4,
+    "smoothing_sigma": 0.8,
+    "max_slope": 1.0,
+    "density": 1100.0,
+    "friction": [
+      1.0,
+      0.005,
+      0.0001
+    ]
+  },
+  "generation": {
+    "count": 500,
+    "seed": 20261125,
+    "guidance_scale": 15.0,
+    "karras_steps": 64,
+    "max_attempts_per_candidate": 8,
+    "save_raw_mesh": true,
+    "prompts": [
+      "a single thick rectangular robotic gripper fingertip pad with a gently curved contact surface",
+      "a single rectangular gripping pad with a shallow concave groove",
+      "a single rectangular gripping pad with rounded ridges",
+      "a single rectangular rubber fingertip pad with a smooth domed surface",
+      "a single rectangular gripping pad with a broad saddle shaped contact surface"
+    ]
+  },
+  "optimization": {
+    "elite_count": 12,
+    "steps_per_embedding": 100,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "gradient_clip": 1.0,
+    "anchor_weight": 0.0,
+    "seed": 90210
+  },
+  "evaluation": {
+    "control_max": 20.0,
+    "ramp_s": 0.6,
+    "close_s": 1.0,
+    "hold_s": 1.0,
+    "disturb_start_s": 0.35,
+    "disturb_duration_s": 0.3,
+    "disturb_force_N": [
+      2,
+      0,
+      0
+    ],
+    "measure_last_s": 0.3,
+    "sample_interval_s": 0.01,
+    "initial_penetration_tolerance_mm": 0.2,
+    "translation_limit_mm": 8.0,
+    "rotation_limit_deg": 30.0,
+    "contact_force_min_N": 0.1,
+    "required_contact_fraction": 0.9,
+    "object_mass_kg": 0.3,
+    "object_friction": [
+      1.0,
+      0.005,
+      0.0001
+    ],
+    "position_x_m": -0.075,
+    "position_z_m": 0.16,
+    "position_jitter_mm": [
+      3.0,
+      2.0
+    ],
+    "yaw_jitter_deg": 10.0,
+    "pose_seed": 314159,
+    "train": [
+      {
+        "name": "cylinder_r18",
+        "type": "cylinder",
+        "size": [
+          0.018,
+          0.019
+        ]
+      },
+      {
+        "name": "cylinder_r24",
+        "type": "cylinder",
+        "size": [
+          0.024,
+          0.019
+        ]
+      },
+      {
+        "name": "cylinder_r30",
+        "type": "cylinder",
+        "size": [
+          0.03,
+          0.019
+        ]
+      },
+      {
+        "name": "sphere_r22",
+        "type": "sphere",
+        "size": [
+          0.022
+        ]
+      },
+      {
+        "name": "box_36x28",
+        "type": "box",
+        "size": [
+          0.018,
+          0.014,
+          0.019
+        ]
+      },
+      {
+        "name": "box_50x36",
+        "type": "box",
+        "size": [
+          0.025,
+          0.018,
+          0.019
+        ]
+      },
+      {
+        "name": "ellipsoid_52x36",
+        "type": "ellipsoid",
+        "size": [
+          0.026,
+          0.018,
+          0.019
+        ]
+      },
+      {
+        "name": "capsule_r15",
+        "type": "capsule",
+        "size": [
+          0.015,
+          0.014
+        ]
+      }
+    ],
+    "validation": [
+      {
+        "name": "unseen_cylinder_r21",
+        "type": "cylinder",
+        "size": [
+          0.021,
+          0.019
+        ]
+      },
+      {
+        "name": "unseen_cylinder_r27",
+        "type": "cylinder",
+        "size": [
+          0.027,
+          0.019
+        ]
+      },
+      {
+        "name": "unseen_sphere_r25",
+        "type": "sphere",
+        "size": [
+          0.025
+        ]
+      },
+      {
+        "name": "unseen_box_44x32",
+        "type": "box",
+        "size": [
+          0.022,
+          0.016,
+          0.019
+        ]
+      },
+      {
+        "name": "unseen_ellipsoid_60x32",
+        "type": "ellipsoid",
+        "size": [
+          0.03,
+          0.016,
+          0.019
+        ]
+      }
+    ]
+  }
+}
