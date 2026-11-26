@@ -5,6 +5,11 @@
 2. lifting  : the gripper base rises (smooth profile) and the support is lowered away.
 3. holding  : the gripper holds the object in the air; short force pulses push it in
                several directions; contacts are measured in the last window.
+
+Score (main result): points for still holding the object after the lift, plus points for
+every disturbance pulse after which it is still held. "Dropped" = the object moved more
+than drop_distance_mm relative to the gripper base, or touched the floor / the support
+after the lift.
 """
 import math
 import xml.etree.ElementTree as ET
@@ -77,6 +82,38 @@ def phase_at(cfg, t):
     return "holding"
 
 
+def score_settings(cfg):
+    """(drop distance [mm], points for holding after the lift, points per survived disturbance)."""
+    e = cfg["evaluation"]
+    return float(e.get("drop_distance_mm", 15.0)), float(e.get("score_grasp", 5)), float(e.get("score_per_disturbance", 2))
+
+
+def max_score(cfg):
+    _, grasp_points, pulse_points = score_settings(cfg)
+    return grasp_points + pulse_points * len(cfg["evaluation"]["disturbances"])
+
+
+def score_from_drop(cfg, drop_time):
+    """Score of a trial whose object dropped at ``drop_time`` (None = never dropped).
+
+    Holding points: the object is still held when the first disturbance starts (lift done).
+    Disturbance k points: still held when the next disturbance starts (last one: end of trial).
+    Returns (held_after_lift 0/1, disturbances survived, score).
+    """
+    _, grasp_points, pulse_points = score_settings(cfg)
+    _, lift_end, total = protocol_times(cfg)
+    starts = sorted(lift_end + pulse["start_s"] for pulse in cfg["evaluation"]["disturbances"])
+    held = lambda deadline: drop_time is None or drop_time >= deadline
+    if not held(starts[0] if starts else total):
+        return 0, 0, 0.0
+    survived = 0
+    for k in range(len(starts)):
+        if not held(starts[k + 1] if k + 1 < len(starts) else total):
+            break
+        survived += 1
+    return 1, survived, grasp_points + pulse_points * survived
+
+
 def _object_half_height(model, geom):
     import mujoco as mj
     names = {mj.mjtGeom.mjGEOM_SPHERE: "sphere", mj.mjtGeom.mjGEOM_CYLINDER: "cylinder", mj.mjtGeom.mjGEOM_CAPSULE: "capsule",
@@ -138,7 +175,8 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
               "pad_contact_fraction": 0.0, "max_drift_mm": 0.0, "max_rotation_deg": 0.0, "closing_shift_mm": 0.0,
               "lift_achieved_mm": 0.0, "mean_normal_force_N": 0.0, "max_tendon_force_N": 0.0, "floor_contact": 0,
               "support_contact": 0, "object_x_m": float(pos[0]), "object_y_m": float(pos[1]),
-              "object_yaw_deg": math.degrees(2 * math.atan2(quat[3], quat[0]))}
+              "object_yaw_deg": math.degrees(2 * math.atan2(quat[3], quat[0])),
+              "score": 0.0, "max_score": max_score(cfg), "held_after_lift": 0, "disturbances_survived": 0, "drop_time_s": None}
     if penetration * 1000 > e["initial_penetration_tolerance_mm"]:
         return {**result, "status": "initial_overlap"}
 
@@ -155,6 +193,8 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
     contact_samples, pad_samples, forces = [], [], []
     max_drift = max_rot = max_tendon = 0.0
     floor_seen = support_seen = False
+    drop_time = None
+    drop_limit = score_settings(cfg)[0] / 1000
     lift_start_z = None
     viewer = None
     if visualize:
@@ -215,6 +255,8 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
                     floor_seen = True
                 if t >= lift_end and is_pair(c, objgeom, support_geom):
                     support_seen = True
+            if drop_time is None and (drift > drop_limit or floor_seen or support_seen):
+                drop_time = round(float(data.time), 4)  # the object has left the hand
             if t < window_start or step % stride:
                 continue
             left_force = right_force = upper_pad_force = lower_pad_force = 0.0
@@ -241,7 +283,9 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
         pad_success = success and pad_fraction >= e["required_pad_contact_fraction"]
         if e.get("success_requires_pad_contact", False):
             success = pad_success
+        held_after_lift, survived, score = score_from_drop(cfg, drop_time)
         return {**result, "status": "ok", "success": int(success), "pad_success": int(pad_success),
+                "score": score, "held_after_lift": held_after_lift, "disturbances_survived": survived, "drop_time_s": drop_time,
                 "contact_fraction": fraction, "pad_contact_fraction": pad_fraction,
                 "max_drift_mm": max_drift * 1000, "max_rotation_deg": max_rot,
                 "lift_achieved_mm": (float(data.xpos[obj][2]) - lift_start_z) * 1000 if lift_start_z is not None else 0.0,
@@ -253,11 +297,17 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
 
 
 def summarize(rows):
-    # Invalid initial geometry is a failure, never removed from the denominator.
-    groups = {}
+    # Invalid initial geometry is a failure (score 0), never removed from the denominator.
+    groups, scores = {}, {}
     for r in rows:
         groups.setdefault(r["object_name"], []).append(r["success"])
-    return {"trials": len(rows), "success_rate": float(np.mean([r["success"] for r in rows])),
+        scores.setdefault(r["object_name"], []).append(r["score"])
+    mean_score = float(np.mean([r["score"] for r in rows]))
+    return {"trials": len(rows), "mean_score": mean_score, "max_score": rows[0]["max_score"],
+            "score_rate": mean_score / rows[0]["max_score"] if rows[0]["max_score"] else 0.0,
+            "worst_object_score": min(float(np.mean(v)) for v in scores.values()),
+            "held_after_lift_rate": float(np.mean([r["held_after_lift"] for r in rows])),
+            "success_rate": float(np.mean([r["success"] for r in rows])),
             "pad_success_rate": float(np.mean([r["pad_success"] for r in rows])),
             "worst_object_success": min(float(np.mean(v)) for v in groups.values()),
             "contact_fraction": float(np.mean([r["contact_fraction"] for r in rows])),

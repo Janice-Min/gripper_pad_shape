@@ -42,7 +42,7 @@ def main():
     records = out / "records"
     records.mkdir(parents=True, exist_ok=True)
     signature = digest({"source": source_signature(cfg), "evaluation": cfg["evaluation"], "suite": args.suite,
-                        "repeats": args.repeats, "code_sha": file_sha(Path(__file__).parent / "padopt" / "evaluation.py")})
+                        "repeats": args.repeats, "code_sha": [file_sha(Path(__file__).parent / "padopt" / name) for name in ("evaluation.py", "xml_model.py")]})
     if (out / "evaluation.json").exists() and json.loads((out / "evaluation.json").read_text())["signature"] != signature:
         raise RuntimeError("Evaluation protocol changed. Choose a new --out directory.")
     save_json(out / "evaluation.json", {"signature": signature, "suite": args.suite, "repeats": args.repeats,
@@ -73,7 +73,9 @@ def main():
         all_trials.extend(value["trials"])
         write_csv(out / "summary.csv", aggregates)
         write_csv(out / "trials.csv", all_trials)
-        print("[" + str(i + 1) + "/" + str(len(candidates)) + "] " + cid + " success=" + format(value["summary"]["success_rate"], ".3f"), flush=True)
+        summary = value["summary"]
+        print("[" + str(i + 1) + "/" + str(len(candidates)) + "] " + cid + " score=" + format(summary["mean_score"], ".2f") + "/"
+              + format(summary["max_score"], "g") + " success=" + format(summary["success_rate"], ".3f"), flush=True)
 
 
 if __name__ == "__main__":

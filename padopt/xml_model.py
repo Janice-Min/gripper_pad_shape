@@ -78,8 +78,9 @@ def add_test_rig(root, cfg, object_case):
     top = e["position_z_m"] - object_half_height(object_case["type"], object_case["size"])
     support = ET.SubElement(root.find("worldbody"), "body", name="object_support", mocap="true",
                             pos=numbers([x, 0, top - sz / 2]))
+    # priority="1": object-support contacts use the support's friction (MuJoCo otherwise takes the larger of the two).
     ET.SubElement(support, "geom", name="support", type="box", size=numbers([sx / 2, sy / 2, sz / 2]),
-                  friction=numbers(e["support_friction"]), rgba="0.62 0.5 0.36 0.55")
+                  friction=numbers(e["support_friction"]), priority="1", rgba="0.62 0.5 0.36 0.55")
 
 
 def gripper_root_body(root, cfg):

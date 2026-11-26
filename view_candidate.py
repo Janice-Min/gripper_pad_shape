@@ -85,3 +85,9 @@ if __name__ == "__main__":
     if result["status"] == "initial_overlap":
         print("Initial overlap before closing; the viewer was not opened (counted as a failure in evaluation).")
     print(json.dumps(result, indent=2))
+    if result["status"] == "ok":
+        n = len(cfg["evaluation"]["disturbances"])
+        dropped = ("dropped at t = %.2f s" % result["drop_time_s"]) if result["drop_time_s"] is not None else "never dropped"
+        print("Score: %g / %g  (held after lift: %s, disturbances survived: %d/%d, %s)"
+              % (result["score"], result["max_score"], "yes" if result["held_after_lift"] else "no",
+                 result["disturbances_survived"], n, dropped))

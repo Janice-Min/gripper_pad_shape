@@ -51,7 +51,7 @@
     "lift_kv": 150.0,
     "support_drop_m": 0.03,
     "support_size_mm": [80.0, 80.0, 6.0],
-    "support_friction": [0.5, 0.005, 0.0001],
+    "support_friction": [0.3, 0.005, 0.0001],
     "hold_s": 3.0,
     "disturbances": [
       {"start_s": 0.3, "duration_s": 0.3, "force_N": [2, 0, 0]},
@@ -77,21 +77,21 @@
     "yaw_jitter_deg": 10.0,
     "pose_seed": 314159,
     "train": [
-      {"name": "cylinder_r28", "type": "cylinder", "size": [0.028, 0.019], "position_x_m": -0.0475},
-      {"name": "cylinder_r31", "type": "cylinder", "size": [0.031, 0.019], "position_x_m": -0.0400},
+      {"name": "cylinder_r28", "type": "cylinder", "size": [0.028, 0.019], "position_x_m": -0.0565},
+      {"name": "cylinder_r31", "type": "cylinder", "size": [0.031, 0.019], "position_x_m": -0.0445},
       {"name": "sphere_r29", "type": "sphere", "size": [0.029], "position_x_m": -0.0475},
-      {"name": "sphere_r33", "type": "sphere", "size": [0.033], "position_x_m": -0.0520},
-      {"name": "box_36x52", "type": "box", "size": [0.018, 0.026, 0.019], "position_x_m": -0.0460},
-      {"name": "box_32x56", "type": "box", "size": [0.016, 0.028, 0.019], "position_x_m": -0.0415},
-      {"name": "box_30x60", "type": "box", "size": [0.015, 0.03, 0.019], "position_x_m": -0.0460},
-      {"name": "ellipsoid_60x56", "type": "ellipsoid", "size": [0.03, 0.028, 0.019], "position_x_m": -0.0355}
+      {"name": "sphere_r33", "type": "sphere", "size": [0.033], "position_x_m": -0.0490},
+      {"name": "box_36x52", "type": "box", "size": [0.018, 0.026, 0.019], "position_x_m": -0.0490},
+      {"name": "box_32x56", "type": "box", "size": [0.016, 0.028, 0.019], "position_x_m": -0.0505},
+      {"name": "box_30x60", "type": "box", "size": [0.015, 0.03, 0.019], "position_x_m": -0.0505},
+      {"name": "ellipsoid_60x56", "type": "ellipsoid", "size": [0.03, 0.028, 0.019], "position_x_m": -0.0520}
     ],
     "validation": [
-      {"name": "unseen_cylinder_r29", "type": "cylinder", "size": [0.029, 0.019], "position_x_m": -0.0475},
-      {"name": "unseen_sphere_r31", "type": "sphere", "size": [0.031], "position_x_m": -0.0490},
-      {"name": "unseen_box_36x56", "type": "box", "size": [0.018, 0.028, 0.019], "position_x_m": -0.0430},
-      {"name": "unseen_box_40x52", "type": "box", "size": [0.02, 0.026, 0.019], "position_x_m": -0.0505},
-      {"name": "unseen_ellipsoid_64x58", "type": "ellipsoid", "size": [0.032, 0.029, 0.019], "position_x_m": -0.0370}
+      {"name": "unseen_cylinder_r29", "type": "cylinder", "size": [0.029, 0.019], "position_x_m": -0.0565},
+      {"name": "unseen_sphere_r31", "type": "sphere", "size": [0.031], "position_x_m": -0.0505},
+      {"name": "unseen_box_36x56", "type": "box", "size": [0.018, 0.028, 0.019], "position_x_m": -0.0490},
+      {"name": "unseen_box_40x52", "type": "box", "size": [0.02, 0.026, 0.019], "position_x_m": -0.0460},
+      {"name": "unseen_ellipsoid_64x58", "type": "ellipsoid", "size": [0.032, 0.029, 0.019], "position_x_m": -0.0415}
     ]
   }
 }
