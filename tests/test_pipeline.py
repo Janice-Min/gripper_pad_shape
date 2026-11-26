@@ -60,21 +60,59 @@ class PipelineTests(unittest.TestCase):
         np.testing.assert_allclose(m0.jnt_stiffness, m1.jnt_stiffness)
         np.testing.assert_allclose(m0.actuator_gear, m1.actuator_gear)
 
-    def test_hold_fixture_is_released(self):
-        m, d = compile_case(self.cfg, self.candidate, self.cfg["evaluation"]["train"][0])
-        row = single_trial(self.cfg, m, d, *case_pose(self.cfg, 0, 0, "train"))
+    def test_evaluation_model_adds_only_support_and_lift_axis(self):
+        import mujoco as mj
+        case = self.cfg["evaluation"]["train"][0]
+        m, d = compile_case(self.cfg, self.candidate, case)
+        base = mj.MjModel.from_xml_path(self.cfg["base_xml"])
+        self.assertEqual(m.nq, base.nq + 1)  # one vertical slide joint for lifting
+        self.assertEqual(m.nu, base.nu + 1)  # its position actuator
+        self.assertGreaterEqual(mj.mj_name2id(m, mj.mjtObj.mjOBJ_BODY, "object_support"), 0)
+        self.assertEqual(m.neq, base.neq)    # no weld or other force holding the object
+        key_m, key_b = mj.mj_name2id(m, mj.mjtObj.mjOBJ_KEY, "open"), mj.mj_name2id(base, mj.mjtObj.mjOBJ_KEY, "open")
+        for name in ("joint1", "joint2", "joint3", "joint4"):
+            jm, jb = mj.mj_name2id(m, mj.mjtObj.mjOBJ_JOINT, name), mj.mj_name2id(base, mj.mjtObj.mjOBJ_JOINT, name)
+            self.assertAlmostEqual(m.key_qpos[key_m, m.jnt_qposadr[jm]], base.key_qpos[key_b, base.jnt_qposadr[jb]])
+            self.assertAlmostEqual(m.jnt_stiffness[jm], base.jnt_stiffness[jb])
+        np.testing.assert_allclose(m.actuator_gear[0], base.actuator_gear[0])
+
+    def test_object_rests_on_support_under_gravity(self):
+        import mujoco as mj
+        case = self.cfg["evaluation"]["train"][0]
+        m, d = compile_case(self.cfg, self.candidate, case)
+        # Without tendon force nothing holds the object: it must go down with the lowered support.
+        loose = copy.deepcopy(self.cfg)
+        loose["evaluation"]["control_max"] = 0.0
+        row = single_trial(loose, m, d, *case_pose(loose, 0, 0, "train"))
         self.assertEqual(row["status"], "ok")
-        self.assertEqual(row["fixture_released"], 1)
+        self.assertEqual(row["success"], 0)
+        self.assertEqual(row["support_contact"], 1)
+        self.assertLess(row["lift_achieved_mm"], -0.5 * 1000 * self.cfg["evaluation"]["support_drop_m"])
+        self.assertLess(row["initial_penetration_mm"], self.cfg["evaluation"]["initial_penetration_tolerance_mm"])
+
+    def test_full_trial_runs(self):
+        m, d = compile_case(self.cfg, self.candidate, self.cfg["evaluation"]["train"][2])
+        row = single_trial(self.cfg, m, d, *case_pose(self.cfg, 2, 0, "train"))
+        self.assertEqual(row["status"], "ok")
         self.assertTrue(np.isfinite(row["max_drift_mm"]))
         self.assertLessEqual(row["max_tendon_force_N"], 10.00001)
+        self.assertIn(row["pad_success"], (0, 1))
+        self.assertLessEqual(row["pad_success"], row["success"])
 
     def test_large_original_object_rejected_for_overlap(self):
         case = {"type": "cylinder", "size": [.055, .019]}
         m, d = compile_case(self.cfg, None, case)
-        row = single_trial(self.cfg, m, d, *case_pose(self.cfg, 0, 0, "train"))
+        row = single_trial(self.cfg, m, d, np.array([-.075, 0, .16]), np.array([1.0, 0, 0, 0]))
         self.assertEqual(row["status"], "initial_overlap")
         self.assertEqual(row["success"], 0)
         self.assertGreater(row["initial_penetration_mm"], 7)
+
+    def test_position_calibration_codes(self):
+        from calibrate_positions import classify, longest_run
+        self.assertEqual(classify(["upper_pad", "lower_pad"]), "B")
+        self.assertEqual(classify(["upper_pad", "lower_pad", "link"]), "b")
+        self.assertEqual(classify(["link"]), "L")
+        self.assertEqual(longest_run([1, 2, 3, 4, 5], list("BB-BB"), {"B"}), [1, 2])
 
     def test_common_poses_and_source_guard(self):
         for a, b in zip(case_pose(self.cfg, 1, 2, "train"), case_pose(self.cfg, 1, 2, "train")):

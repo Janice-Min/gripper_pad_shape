@@ -1,25 +1,28 @@
-# 실행 확인 범위 — 2026-11-25
+# 실행 확인 범위 — 2026-11-26 (평가 방식 변경 반영)
 
 ## 실제로 확인한 항목
 
-- Python 3.12, MuJoCo 3.17.0, NumPy·SciPy 환경에서 검증했다.
+- Python 3.13, MuJoCo 3.17.0, NumPy·SciPy 환경에서 검증했다(처음 버전은 Python 3.12).
 - 첨부 원본 XML이 MuJoCo에 로딩됨을 확인했다.
 - 원본 `open` keyframe에서 반지름 55 mm 물체와 기존 손가락의 초기 침투가 약 8 mm임을 확인했다.
 - 평면 패드 대조군의 양쪽 STL, 96개/패드의 convex 충돌 조각, 부착 XML을 생성했다.
-- 6개 unittest를 통과했다: 치수·대칭·닫힌 표면, 원본 이름 있는 XML 요소 보존 및 컴파일, 시험 시 물체 고정 해제, 원본 큰 물체의 초기 겹침 검출, 동일 pose·설정 서명 검사, 명시적 합성 mesh를 이용한 후처리 단위 테스트.
-- 학습 대상 8개 물체에서 원본 그리퍼와 평면 패드 그리퍼를 각각 실제로 시뮬레이션했다. 기본 100 g·0.5 N 조건, 물체별 nominal pose 1개인 간단한 동작 확인이다.
-- 원본 그리퍼는 3/8, 평면 패드는 4/8의 nominal trial이 기본 성공 조건을 만족했다. 수치 경고 및 초기 겹침으로 제외된 trial은 없었다. 이는 최적화 성능이나 일반화 성능을 보여주는 결과가 아니다.
-- 위치 미리보기와 두께 지도 PNG를 생성하고 부착 방향을 확인했다.
+- 9개 unittest를 통과했다: 치수·대칭·닫힌 표면, 원본 이름 있는 XML 요소 보존 및 컴파일, 평가용 모델에 받침대·슬라이드 관절·액추에이터만 추가되고 원본 관절 keyframe·강성·gear가 유지됨, 구동력 0일 때 물체가 받침대와 함께 내려가 실패함(물체를 붙잡는 구속이 없음), 전체 시험 실행, 원본 큰 물체의 초기 겹침 검출, 동일 pose·설정 서명 검사, 위치 보정 기호 분류, 명시적 합성 mesh를 이용한 후처리 단위 테스트.
+- 새 평가 방식의 물리 동작을 시간 기록으로 확인했다: 구동력 0이면 물체는 받침대를 따라 내려가고, 손가락이 잡으면 그리퍼와 함께 약 49 mm 올라간다. 들어 올리기는 0.5초, 최대 가속도 약 1 m/s²다.
+- `calibrate_positions.py`로 train 8개·validation 5개 물체의 x 위치를 정했다. `capsule_r15`만 양쪽 패드만 닿는 위치가 한 곳(−72.5 mm)이다.
+- 학습 대상 8개 물체에서 원본 그리퍼와 평면 패드 그리퍼를 각각 새 방식으로 시뮬레이션했다(100 g, 0.5 N 펄스 5방향, 물체별 nominal pose 1개). **둘 다 0/8 성공**이다. 평면 패드는 `cylinder_r30`을 들어 올렸지만 9.3 mm 미끄러져 8 mm 기준을 넘었다. 수치 경고 및 초기 겹침으로 제외된 trial은 없었다.
+- 원인을 확인했다: 작은 물체에서는 distal 관절(강성 0.0005 N·m/rad)이 먼저 한계(1.5 rad)까지 굽어, 패드가 물체 앞쪽을 감싸고 물체를 팜 쪽으로 미는 힘(패드당 약 0.4 N)만 생긴다. 받침대가 빠지면 이 힘으로는 물체 무게를 버티지 못한다. 받침대 마찰을 0.2·0.5·1.0으로 바꿔도 결과는 같았다.
+- 패드 형상이 결과를 바꾸는지 확인하려고 단순 형상 7개(평면 1.5·5.5 mm, 관절 쪽·끝 쪽이 두꺼운 쐐기, 폭 방향 홈·능선, 끝 쪽 돌기)를 같은 조건으로 시험했다. train 8개 기준 성공률은 0~25%였고 성공은 모두 패드 파지였다. 이 형상들은 확인용이며 저장소에 포함하지 않았다.
+- 뷰어 재생(`view_candidate.py`)이 단계 표시와 함께 실제 속도로 동작함을 가상 디스플레이에서 확인했다.
 
-상세 기록은 `runs/baselines/eval_bare_train/trials.csv`, `runs/baselines/eval_flat_train/trials.csv`에 있다. 이 예제는 baseline이며 Shap-E 생성 후보 또는 elite로 선택할 수 없다.
+상세 기록은 `runs/baselines/eval_bare_train/trials.csv`, `runs/baselines/eval_flat_train/trials.csv`에 있다. 이 예제는 baseline이며 Shap-E 생성 후보 또는 elite로 선택할 수 없다. 단계별 장면은 `runs/baselines/protocol_phases.png`에 있다.
 
 ## 이 환경에서 실행하지 못한 항목
 
-- 이 작업 환경에는 PyTorch·Shap-E 체크포인트가 없으므로 실제 Shap-E 패드 500개 생성은 실행하지 않았다.
+- 이 작업 환경에는 PyTorch·Shap-E 체크포인트가 없으므로 실제 Shap-E 패드 생성은 실행하지 않았다. 실험 PC(RTX 5080)에서는 후보 생성이 동작했다.
 - 실제 체크포인트를 사용한 diffusion loss 역전파와 임베딩 업데이트도 실행하지 않았다.
-- 500개 후보의 전체 다물체 평가, 5 round 최적화, 독립 seed 반복, validation 및 300 g stress 실험은 실행하지 않았다.
+- Shap-E 후보의 새 방식 평가, 여러 round 최적화, 독립 seed 반복, validation 및 300 g stress 실험은 실행하지 않았다.
 - 소프트 재료 변형·접착·제작·실물 파지 실험은 포함하지 않는다.
 
-Shap-E 관련 호출은 제공된 소스의 `sample_latents`, `decode_latent_mesh`, `training_losses`, `model.wrapped.clip` 인터페이스를 기준으로 작성했다. CUDA 환경에서 먼저 후보 2개를 생성·평가해 실제 모델 의존성과 VRAM 사용량을 확인한 뒤 전체 실험을 실행한다. 최적화 모듈은 누락·비유한 임베딩 gradient를 감지하면 중단하고, loss 및 gradient norm 기록을 저장한다.
+Shap-E 관련 호출은 제공된 소스의 `sample_latents`, `decode_latent_mesh`, `training_losses`, `model.wrapped.clip` 인터페이스를 기준으로 작성했다. 최적화 모듈은 누락·비유한 임베딩 gradient를 감지하면 중단하고, loss 및 gradient norm 기록을 저장한다.
 
 위 검증은 이 소스 버전의 범위이다. 사용자 환경의 라이브러리 버전이나 Shap-E 소스, 물체·마찰·시험 조건을 바꾼 경우 다시 확인해야 한다.

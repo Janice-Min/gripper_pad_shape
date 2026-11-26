@@ -30,13 +30,18 @@ def main():
         eligible.append((row, candidate))
     if len(eligible) < count:
         raise ValueError("Need at least " + str(count) + " evaluated Shap-E candidates")
-    eligible.sort(key=lambda item: (-float(item[0]["success_rate"]), -float(item[0]["worst_object_success"]), int(item[0]["invalid_trials"]),
-                                   -float(item[0]["contact_fraction"]), float(item[0]["mean_drift_mm"]),
-                                   float(item[0]["one_pad_volume_m3"]), item[0]["candidate_id"]))
+    needed = {"pad_success_rate", "pad_contact_fraction"}
+    if not needed <= set(rows[0]):
+        raise ValueError("This summary.csv was made by the old evaluation protocol (no pad_success_rate). Re-evaluate with evaluate_pads.py into a new --out folder.")
+    eligible.sort(key=lambda item: (-float(item[0]["pad_success_rate"]), -float(item[0]["success_rate"]),
+                                   -float(item[0]["worst_object_success"]), int(item[0]["invalid_trials"]),
+                                   -float(item[0]["pad_contact_fraction"]), -float(item[0]["contact_fraction"]),
+                                   float(item[0]["mean_drift_mm"]), float(item[0]["one_pad_volume_m3"]), item[0]["candidate_id"]))
     if float(eligible[0][0]["success_rate"]) <= 0:
-        raise RuntimeError("Every design failed. Check object placement, actuator authority and protocol before optimizing.")
+        raise RuntimeError("Every design failed. Check trials.csv (status, closing_shift_mm, pad_contact_fraction) and the protocol before optimizing.")
     selected = [{"candidate_dir": str(path), "candidate_id": row["candidate_id"], "metrics": row} for row, path in eligible[:count]]
-    save_json(args.out, {"suite": "train", "ranking": ["success_rate desc", "worst_object_success desc", "invalid_trials asc", "contact_fraction desc", "mean_drift_mm asc", "pad_volume asc"],
+    save_json(args.out, {"suite": "train", "ranking": ["pad_success_rate desc", "success_rate desc", "worst_object_success desc", "invalid_trials asc",
+                                     "pad_contact_fraction desc", "contact_fraction desc", "mean_drift_mm asc", "pad_volume asc"],
                          "summary_path": str(Path(args.summary).resolve()), "elites": selected})
     print("Selected " + str(len(selected)) + " elites -> " + str(args.out))
 
