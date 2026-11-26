@@ -1,9 +1,0 @@
-﻿candidate_id,suite,object_name,repeat,initial_penetration_mm,success,contact_fraction,pad_contact_fraction,max_drift_mm,max_rotation_deg,mean_normal_force_N,max_tendon_force_N,floor_contact,fixture_released,object_x_m,object_y_m,object_yaw_deg,status
-bare_gripper,train,cylinder_r18,0,0.0,0,0.0,0.0,157.85023706139796,114.659138091185,0.0,10.0,1,1,-0.075,0.0,0.0,ok
-bare_gripper,train,cylinder_r24,0,0.0,0,0.0,0.0,148.23610388962098,101.79477453286599,0.0,10.0,1,1,-0.075,0.0,0.0,ok
-bare_gripper,train,cylinder_r30,0,0.0,0,0.0,0.0,144.98248610236027,179.99999993728255,0.0,10.0,1,1,-0.075,0.0,0.0,ok
-bare_gripper,train,sphere_r22,0,0.0,0,0.0,0.0,880.0824468251603,0.0,0.0,10.0,1,1,-0.075,0.0,0.0,ok
-bare_gripper,train,box_36x28,0,0.0,1,1.0,0.0,1.7622975968657124,2.1234261643689027,3.6132034786583676,10.0,0,1,-0.075,0.0,0.0,ok
-bare_gripper,train,box_50x36,0,0.0,1,1.0,0.0,1.360729059617912,3.1100388696650665,3.376730148290296,10.0,0,1,-0.075,0.0,0.0,ok
-bare_gripper,train,ellipsoid_52x36,0,0.0,1,1.0,0.0,2.3092227129751084,2.4945460537634214,3.6336316746016353,10.0,0,1,-0.075,0.0,0.0,ok
-bare_gripper,train,capsule_r15,0,0.0,0,0.0,0.0,219.8317827323044,179.91325131154642,0.0,10.0,1,1,-0.075,0.0,0.0,ok

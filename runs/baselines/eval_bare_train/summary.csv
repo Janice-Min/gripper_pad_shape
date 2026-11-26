@@ -1,2 +1,0 @@
-﻿candidate_id,candidate_dir,suite,one_pad_volume_m3,trials,success_rate,worst_object_success,contact_fraction,mean_drift_mm,invalid_trials
-bare_gripper,,train,0.0,8,0.375,0.0,0.375,194.55191324753784,0

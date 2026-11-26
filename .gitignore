@@ -1,0 +1,6 @@
+/runs/
+/.venv/
+/model_cache/
+/shap_e_model_cache/
+__pycache__/
+*.pyc
