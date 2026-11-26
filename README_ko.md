@@ -126,7 +126,7 @@ python evaluate_pads.py --bare --suite train --repeats 3 --out runs/eval_bare
 python evaluate_pads.py --candidate runs/baselines/pad_flat --suite train --repeats 3 --out runs/eval_flat
 ```
 
-새 평가 방식(4-8)에서는 원본 그리퍼와 두께 3.5 mm 평면 패드 모두 train 8개 물체를 하나도 들어 올리지 못한다. 작은 물체에서는 손가락을 닫으면 distal 관절이 먼저 한계까지 굽어 패드가 물체 앞쪽을 감싸고, 물체를 팜 쪽으로 미는 약한 힘(패드당 약 0.4 N)만 생긴다. 받침대가 빠지면 물체 무게를 버티지 못한다. `cylinder_r30`은 평면 패드로 들어 올리지만 9 mm 미끄러져 8 mm 기준을 넘는다. 단순한 형상으로 시험해 보면 패드 모양에 따라 성공률이 0~25%로 달라져, 패드 형상 최적화로 개선할 여지가 있다.
+물체는 그리퍼가 감쌀 수 있는 크기(손 안쪽 폭 약 55~68 mm)로 골랐고, 링크 4개가 모두 닿는 enveloping 위치에 놓는다(4-12). 학습 조건(300 g, 2 N 펄스)에서 원본 그리퍼는 train 기준 위치 8개 중 2개, 평면 패드(3.5 mm)는 5개를 성공했다. 위치 오차를 넣은 `--repeats 3`에서는 각각 8%, 33%로 내려간다. 가벼운 조건(`config_light.json`, 100 g, 0.5 N)에서는 둘 다 8/8 성공한다.
 
 ### 2-2. 후보 2개로 동작 확인
 
@@ -162,11 +162,11 @@ python run_optimization.py --rounds 5 --count 100 --repeats 3 --shap-e-dir $SHAP
 
 ### 2-5. 최종 설계의 validation과 재생
 
-최종 후보는 **train 결과만으로** 고른 뒤 validation(학습에 쓰지 않은 물체)과 stress 조건에서 한 번 평가한다. `round_004/pad_0037`은 예시다.
+최종 후보는 **train 결과만으로** 고른 뒤 validation(학습에 쓰지 않은 물체)에서 학습 조건(300 g, 2 N)과 가벼운 조건(100 g, 0.5 N)으로 한 번씩 평가한다. `round_004/pad_0037`은 예시다.
 
 ```powershell
 python evaluate_pads.py --candidate runs/round_004/pad_0037 --suite validation --repeats 5 --out runs/final_validation
-python evaluate_pads.py --config config_stress.json --candidate runs/round_004/pad_0037 --suite validation --repeats 5 --out runs/final_stress
+python evaluate_pads.py --config config_light.json --candidate runs/round_004/pad_0037 --suite validation --repeats 5 --out runs/final_light
 python view_candidate.py --candidate runs/round_004/pad_0037 --suite validation --case 0
 ```
 
@@ -179,15 +179,15 @@ python view_candidate.py --candidate runs/round_004/pad_0037 --suite validation 
 ```
 gripper_pad_shape/
 ├─ assets/design0009.xml      기준 그리퍼 MuJoCo 모델
-├─ config.json                기본 설정 (물체 100 g, 외란 펄스 0.5 N × 5방향)
-├─ config_stress.json         stress 설정 (물체 300 g, 외란 펄스 2 N × 5방향)
+├─ config.json                학습·평가 기본 설정 (물체 300 g, 외란 펄스 2 N × 5방향)
+├─ config_light.json          가벼운 조건 확인용 (물체 100 g, 외란 펄스 0.5 N × 5방향)
 ├─ inspect_gripper.py         패드 설계 영역 치수 확인
 ├─ make_baselines.py          평면 패드 대조군 생성
 ├─ generate_pads.py           Shap-E 패드 후보 생성
 ├─ preview_pads.py            후보 두께 지도 그림
 ├─ preview_mount.py           open 자세 부착 위치 단면도
 ├─ build_gripper.py           후보 XML 재생성
-├─ calibrate_positions.py     물체를 패드가 닿는 위치에 놓도록 x 위치 결정
+├─ calibrate_positions.py     물체를 enveloping(링크 4개 접촉) 위치에 놓도록 x 위치 결정
 ├─ view_candidate.py          MuJoCo 뷰어로 파지 시험 재생
 ├─ evaluate_pads.py           여러 물체 파지 평가
 ├─ select_elites.py           우수 후보 선택
@@ -239,7 +239,7 @@ gripper_pad_shape/
 
 | 공통 옵션 | 기본값 | 설명 |
 |---|---|---|
-| `--config` | `config.json` | 설정 파일. stress 조건은 `config_stress.json`을 쓴다. |
+| `--config` | `config.json` | 설정 파일. 가벼운 조건은 `config_light.json`을 쓴다. |
 
 ### 4-1. `inspect_gripper.py` — 패드 설계 영역 확인
 
@@ -367,14 +367,14 @@ python build_gripper.py --candidate runs/round_000/pad_0000
 
 | `--case` | train (x 위치) | validation (x 위치) |
 |---|---|---|
-| 0 | `cylinder_r18` (-59.0 mm) | `unseen_cylinder_r21` (-56.0 mm) |
-| 1 | `cylinder_r24` (-49.0 mm) | `unseen_cylinder_r27` (-66.0 mm) |
-| 2 | `cylinder_r30` (-77.5 mm) | `unseen_sphere_r25` (-76.0 mm) |
-| 3 | `sphere_r22` (-76.5 mm) | `unseen_box_44x32` (-48.5 mm) |
-| 4 | `box_36x28` (-50.0 mm) | `unseen_ellipsoid_60x32` (-41.0 mm) |
-| 5 | `box_50x36` (-40.0 mm) |  |
-| 6 | `ellipsoid_52x36` (-50.0 mm) |  |
-| 7 | `capsule_r15` (-72.5 mm) |  |
+| 0 | `cylinder_r28` (-47.5 mm) | `unseen_cylinder_r29` (-47.5 mm) |
+| 1 | `cylinder_r31` (-40.0 mm) | `unseen_sphere_r31` (-49.0 mm) |
+| 2 | `sphere_r29` (-47.5 mm) | `unseen_box_36x56` (-43.0 mm) |
+| 3 | `sphere_r33` (-52.0 mm) | `unseen_box_40x52` (-50.5 mm) |
+| 4 | `box_36x52` (-46.0 mm) | `unseen_ellipsoid_64x58` (-37.0 mm) |
+| 5 | `box_32x56` (-41.5 mm) |  |
+| 6 | `box_30x60` (-46.0 mm) |  |
+| 7 | `ellipsoid_60x56` (-35.5 mm) |  |
 
 뷰어에서 `C`를 누르면 접촉점, `F`를 누르면 접촉력이 표시된다. 패드가 실제로 물체에 닿는지 확인할 때 쓴다.
 
@@ -399,7 +399,7 @@ python view_candidate.py --candidate runs/round_000/pad_0000 --suite validation 
 | 0 s | 시작 | `open` 자세. 물체는 **받침대 위에 그냥 놓여 있다.** 물체를 붙잡는 힘은 없고 처음부터 중력을 받는다. 시작할 때 물체·패드가 0.2 mm 넘게 파고들어 있으면 `initial_overlap`으로 즉시 실패 처리한다(받침대와의 접촉은 제외). |
 | 0–1.0 s | 닫기 | 텐던 구동 입력을 0.6초 동안 0 → 20으로 올리고 1.0초까지 닫는다(텐던 힘 최대 10 N). 물체는 받침대 위에서 **밀리고 미끄러질 수 있다.** |
 | 1.0–1.5 s | 들어 올리기 | 그리퍼 베이스(`palm`)가 50 mm 올라가고, 동시에 받침대가 30 mm 내려간다. 속도가 0에서 시작해 0에서 끝나는 부드러운 궤적이며 최대 가속도는 약 1 m/s²다. |
-| 1.5–4.5 s | 유지 | 그리퍼만으로 물체를 공중에 들고 있다. 0.5 N 힘 펄스(각 0.3 s)를 +x, −x, +y, −y, −z(아래) 순서로 0.5 s 간격으로 준다. |
+| 1.5–4.5 s | 유지 | 그리퍼만으로 물체를 공중에 들고 있다. 2 N 힘 펄스(각 0.3 s, `config_light.json`은 0.5 N)를 +x, −x, +y, −y, −z(아래) 순서로 0.5 s 간격으로 준다. |
 | 4.2–4.5 s | 측정 | 마지막 0.3 s 동안 0.01 s마다 양쪽 손가락과 양쪽 패드의 접촉력을 기록한다. |
 
 좌표: 손가락은 −x 방향으로 뻗어 있고(팜이 +x 쪽), y 방향으로 닫히며, z가 위쪽(중력 반대)이다. 패드 폭 방향이 z다.
@@ -416,11 +416,11 @@ python view_candidate.py --candidate runs/round_000/pad_0000 --suite validation 
 
 **패드 파지 성공(`pad_success`)**: 위 성공 조건을 만족하면서, 측정 구간 샘플의 90% 이상에서 **위·아래 패드가 둘 다** 0.1 N 이상으로 닿아 있는 경우다. 링크나 손가락 끝만으로 잡은 성공과 구별하기 위한 지표이며 elite 순위의 첫 기준이다. `success_requires_pad_contact`를 true로 바꾸면 `success` 자체도 패드 접촉을 요구한다.
 
-**물체 위치**: 물체마다 패드가 닿는 위치(`position_x_m`)에 놓는다(`calibrate_positions.py`로 정한 값). `repeat 0`은 그 위치 그대로, `repeat 1` 이상은 x ±3 mm, y ±2 mm, yaw ±10° 안에서 흔든 위치다. 흔드는 값은 seed·물체 번호·반복 번호로만 정해지므로 **모든 후보가 똑같은 위치들에서 시험받는다.**
+**물체 위치**: 물체마다 손가락을 닫았을 때 **링크 4개와 양쪽 패드가 모두 닿는 enveloping 위치**(`position_x_m`)에 놓는다(`calibrate_positions.py`로 정한 값). `repeat 0`은 그 위치 그대로, `repeat 1` 이상은 x ±3 mm, y ±2 mm, yaw ±10° 안에서 흔든 위치다. 흔드는 값은 seed·물체 번호·반복 번호로만 정해지므로 **모든 후보가 똑같은 위치들에서 시험받는다.**
 
 | 옵션 | 기본값 | 설명 |
 |---|---|---|
-| `--config` | `config.json` | stress 평가는 `config_stress.json` |
+| `--config` | `config.json` | 가벼운 조건은 `config_light.json` |
 | `--round-dir` | — | round 폴더의 완성된 후보 전부 평가 |
 | `--candidate` | — | 후보 하나만 평가 |
 | `--bare` | — | 패드 없는 원본 그리퍼 평가 |
@@ -464,7 +464,7 @@ python view_candidate.py --candidate runs/round_000/pad_0000 --suite validation 
 python evaluate_pads.py --round-dir runs/round_000 --suite train --repeats 3 --out runs/round_000/eval_train
 python evaluate_pads.py --candidate runs/round_000/pad_0005 --suite validation --repeats 5 --out runs/check_pad_0005_val
 python evaluate_pads.py --bare --suite train --repeats 3 --out runs/eval_bare
-python evaluate_pads.py --config config_stress.json --candidate runs/round_000/pad_0005 --suite validation --repeats 5 --out runs/check_pad_0005_stress
+python evaluate_pads.py --config config_light.json --candidate runs/round_000/pad_0005 --suite validation --repeats 5 --out runs/check_pad_0005_light
 ```
 
 ### 4-9. `select_elites.py` — 우수 후보 선택
@@ -557,30 +557,40 @@ python run_optimization.py --start-round 3 --rounds 2 --count 100 --shap-e-dir $
 
 ### 4-12. `calibrate_positions.py` — 물체 위치 정하기
 
-물체를 **패드가 닿는 위치**에 놓기 위해 물체마다 x 위치를 정한다. 물체를 x 방향으로 옮겨 가며 손가락을 닫아 보고, 닫기가 끝났을 때 물체에 닿은 손가락 부위를 기록한다. **위·아래 패드만 닿는 위치**가 가장 길게 이어진 구간의 가운데를 고른다. 그런 구간이 없으면 "양쪽 패드 + 다른 부위"가 닿는 구간을 쓴다. 성공 여부는 쓰지 않으므로 특정 패드 설계에 유리하게 위치를 고르지 않는다.
+물체마다 x 위치를 정한다. 물체를 x 방향으로 1.5 mm씩 옮겨 가며 손가락을 닫아 보고, 닫기가 끝났을 때 물체에 닿은 손가락 부위를 기록한다. 원하는 파지가 가장 길게 이어진 구간에서 가운데에 가장 가까운, 실제로 시험한 위치를 고른다. 성공 여부는 쓰지 않으므로 특정 패드 설계에 유리하게 위치를 고르지 않는다.
 
-`config.json`에는 이미 평면 대조군 기준으로 정한 값이 들어 있다. 기준 그리퍼 XML, `pad` 설정, 물체 목록, `control_max`처럼 닫히는 모양이 바뀌는 설정을 고쳤을 때만 다시 실행한다.
+- `--grasp envelop` (기본): **링크 4개(위·아래 proximal, 위·아래 distal)와 양쪽 패드가 모두 닿는** 위치. 그런 위치가 없으면 패드가 다 닿지 않아도 링크 4개가 닿는 위치.
+- `--grasp pad`: 양쪽 패드만 닿는 위치. 없으면 양쪽 패드 + 다른 부위가 닿는 위치.
+- 원하는 파지가 한 번도 나오지 않은 물체는 `--fallback pad`(기본)이면 패드 기준으로, `--fallback keep`이면 현재 위치를 그대로 둔다.
+
+![예전 물체와 새 물체의 닫힌 모습 (위에서 본 그림, 아래쪽이 팜)](runs/baselines/envelop_compare.png)
+
+이 그리퍼(design0009)는 닫을 때 distal 관절이 먼저 한계까지 굽고 손끝끼리 만나며, proximal 링크는 약 5°만 닫힌다. 그래서 enveloping은 **닫힌 손 안쪽(폭 약 55~68 mm)을 채우는 물체만** 가능하다. 지름 50 mm 이하 원기둥·구나 폭 40 mm 이하 상자는 팜 쪽으로 옮겨도 손 안에 떠 있거나 distal 링크에만 닿는다. 지금 물체 세트는 이 범위에서 골랐다.
+
+`config.json`에는 이미 평면 대조군 기준으로 정한 값이 들어 있다. 기준 그리퍼 XML, `pad` 설정, 물체 목록, 물체 질량, `control_max`처럼 닫히는 모양이 바뀌는 설정을 고쳤을 때만 다시 실행한다.
 
 | 옵션 | 기본값 | 설명 |
 |---|---|---|
 | `--config` | `config.json` | |
-| `--candidate` | `runs/baselines/pad_flat` | 패드 위치를 찾을 때 쓰는 패드 (기본: 평면 대조군) |
+| `--candidate` | `runs/baselines/pad_flat` | 위치를 찾을 때 쓰는 패드 (기본: 평면 대조군) |
 | `--suite` | `both` | `train`, `validation`, `both` |
+| `--grasp` | `envelop` | 원하는 파지: `envelop`, `pad` |
+| `--fallback` | `pad` | 원하는 파지가 없는 물체 처리: `pad`, `keep` |
 | `--x-near-mm`, `--x-far-mm` | −25, −100 | 탐색 범위 (팜에 가까운 쪽, 먼 쪽) |
-| `--step-mm` | 2.5 | 탐색 간격 |
+| `--step-mm` | 1.5 | 탐색 간격 |
 | `--write` | 꺼짐 | 고른 값을 `--config`의 각 물체에 `position_x_m`으로 저장. 없으면 표만 출력한다. |
-| `--also-write` | 없음 | 같은 값을 함께 저장할 다른 config (예: `config_stress.json`) |
+| `--also-write` | 없음 | 같은 값을 함께 저장할 다른 config (예: `config_light.json`) |
 
-출력 표의 기호: `B` 양쪽 패드만, `b` 양쪽 패드 + 다른 부위, `p` 한쪽 패드, `L` 링크·손가락 끝만, `-` 접촉 없음, `o` 시작부터 겹침.
+출력 표의 기호: `E` 링크 4개 + 양쪽 패드(enveloping), `e` 링크 4개(패드는 일부), `B` 양쪽 패드만, `b` 양쪽 패드 + 다른 부위, `p` 한쪽 패드, `L` 링크·손가락 끝만, `-` 접촉 없음, `o` 시작부터 겹침.
 
 ```powershell
 python calibrate_positions.py
-python calibrate_positions.py --write --also-write config_stress.json
+python calibrate_positions.py --write --also-write config_light.json
+python calibrate_positions.py --grasp pad
 ```
 
-위치를 바꾸면 평가 조건이 바뀌므로 기존 평가 결과는 새 `--out` 폴더에서 다시 만들어야 한다. `config_stress.json`도 같은 위치를 써야 결과를 비교할 수 있다.
-
-현재 값에서 `capsule_r15`는 양쪽 패드만 닿는 위치가 한 곳(−72.5 mm)뿐이라 위치 오차에 민감하다.
+- 위치를 바꾸면 평가 조건이 바뀌므로 기존 평가 결과는 새 `--out` 폴더에서 다시 만들어야 한다. `config_light.json`도 같은 위치를 써야 결과를 비교할 수 있다.
+- 원기둥은 enveloping 구간이 짧고 중간에 끊겨(`E p E E`), 위치 오차를 넣은 반복(`--repeats` 2 이상)에서는 링크 4개가 다 닿지 않는 시험이 섞인다.
 
 ---
 
@@ -602,7 +612,7 @@ python calibrate_positions.py --write --also-write config_stress.json
 
 ## 6. config.json 설정 항목
 
-`config_stress.json`은 `evaluation.object_mass_kg`(0.1 → 0.3 kg)와 외란 펄스 크기(0.5 → 2 N)만 다르다. 물체 위치는 같다.
+`config.json`이 학습·평가 기본 조건(물체 300 g, 외란 펄스 2 N)이다. `config_light.json`은 `evaluation.object_mass_kg`(0.3 → 0.1 kg)와 외란 펄스 크기(2 → 0.5 N)만 다르고 물체와 위치는 같다. 예전의 `config_stress.json`(300 g, 2 N)은 지금의 `config.json`과 같아져서 없앴다.
 
 ### 6-1. 경로
 
@@ -673,7 +683,7 @@ python calibrate_positions.py --write --also-write config_stress.json
 | `support_size_mm` | `[80, 80, 6]` | 받침대 크기 (가로, 세로, 두께) |
 | `support_friction` | `[0.5, 0.005, 0.0001]` | 받침대 마찰. 닫는 동안 물체가 얼마나 쉽게 밀리는지 정한다. |
 | `hold_s` | 3.0 | 들어 올린 뒤 유지 단계 길이 |
-| `disturbances` | 5개 펄스 | 유지 단계 시작 기준 `start_s`부터 `duration_s` 동안 `force_N`(world x, y, z)을 물체에 준다. 기본은 0.5 N으로 +x, −x, +y, −y, −z 순서 |
+| `disturbances` | 5개 펄스 | 유지 단계 시작 기준 `start_s`부터 `duration_s` 동안 `force_N`(world x, y, z)을 물체에 준다. 기본은 2 N으로 +x, −x, +y, −y, −z 순서 (`config_light.json`은 0.5 N) |
 | `measure_last_s` | 0.3 | 접촉을 측정하는 마지막 구간 길이 |
 | `sample_interval_s` | 0.01 | 측정 간격 |
 | `initial_penetration_tolerance_mm` | 0.2 | 시작 시 허용 침투량 (받침대 접촉 제외) |
@@ -683,14 +693,14 @@ python calibrate_positions.py --write --also-write config_stress.json
 | `required_contact_fraction` | 0.9 | 성공 조건: 양쪽 손가락 접촉 유지 비율 |
 | `required_pad_contact_fraction` | 0.9 | 패드 파지 성공 조건: 양쪽 패드 접촉 유지 비율 |
 | `success_requires_pad_contact` | false | true면 `success`도 패드 접촉을 요구한다 |
-| `object_mass_kg` | 0.1 | 물체 질량 |
+| `object_mass_kg` | 0.3 | 물체 질량 (`config_light.json`은 0.1) |
 | `object_friction` | `[1.0, 0.005, 0.0001]` | 물체 마찰 |
 | `position_x_m` | −0.075 | 물체 x 위치의 기본값. 물체 항목에 `position_x_m`이 있으면 그 값을 쓴다. |
 | `position_z_m` | 0.16 | 물체 중심 높이 (손가락 평면 높이). 받침대 윗면은 물체 맨 아래에 맞춰진다. |
 | `position_jitter_mm` | `[3.0, 2.0]` | repeat 1 이상의 x, y 흔들림 범위 |
 | `yaw_jitter_deg` | 10.0 | repeat 1 이상의 yaw 흔들림 범위 |
 | `pose_seed` | 314159 | 흔들림 seed |
-| `train`, `validation` | 8개, 5개 | 물체 목록. `size`는 MuJoCo 규칙의 **반치수**(m)다. 예: box `[0.018, 0.014, 0.019]`는 36 × 28 × 38 mm. `position_x_m`은 `calibrate_positions.py`가 정한 물체별 위치 |
+| `train`, `validation` | 8개, 5개 | 물체 목록. 모두 손 안쪽 폭(약 55~68 mm)을 채우는 크기다. `size`는 MuJoCo 규칙의 **반치수**(m)다. 예: box `[0.018, 0.026, 0.019]`는 36 × 52 × 38 mm (x × y × 높이, y가 손가락이 닫히는 방향). `position_x_m`은 `calibrate_positions.py`가 정한 물체별 위치 |
 
 ---
 
@@ -714,7 +724,7 @@ python calibrate_positions.py --write --also-write config_stress.json
 
 ### 평가 방식 변경 (2026-11-26) 이후 할 일
 
-평가가 "고정된 물체를 1초 쥐기"에서 "받침대 위 물체를 쥐고 들어 올려 3초 유지"로 바뀌었다(4-8). **이미 만든 패드 후보는 그대로 쓸 수 있다.** 평가 설정은 후보 서명에 들어가지 않기 때문이다. 예전 평가 결과, 그 결과로 고른 `elites.json`, 그 elite로 학습한 `next_embeddings.pt`는 다시 만들어야 한다.
+평가가 "고정된 물체를 1초 쥐기"에서 "받침대 위 물체를 쥐고 들어 올려 3초 유지"로 바뀌었다(4-8). 물체 세트도 enveloping이 가능한 크기로 바뀌었고, 학습 조건은 300 g, 2 N이 되었다. **이미 만든 패드 후보는 그대로 쓸 수 있다.** 평가 설정은 후보 서명에 들어가지 않기 때문이다. 예전 평가 결과, 그 결과로 고른 `elites.json`, 그 elite로 학습한 `next_embeddings.pt`는 다시 만들어야 한다.
 
 ```powershell
 Rename-Item runs\round_000\eval_train eval_train_old
@@ -768,7 +778,7 @@ Get-ChildItem "C:\Users\User\Desktop" -Recurse -Directory -Filter shap_e -ErrorA
 | `Embedding bank was fitted for a different pad domain/base gripper` | 다른 `pad` 설정·기준 XML로 학습된 bank | 같은 설정으로 학습한 bank 사용 |
 | `Evaluation protocol changed. Choose a new --out directory.` | 같은 `--out`에 다른 평가 조건 | `--out` 폴더 이름을 바꾼다 |
 | `Need at least 12 evaluated Shap-E candidates` | 평가된 후보가 `elite_count`보다 적음 | 후보를 더 만들어 평가하거나 `--count`를 줄인다 |
-| `Every design failed` | 모든 후보의 성공률이 0. 새 평가에서는 평면 대조군도 train 8개 모두 실패하므로 후보 수가 적으면 생길 수 있다 | 후보를 더 만들어 평가한다. `trials.csv`의 `closing_shift_mm`, `lift_achieved_mm`, `pad_contact_fraction`과 `view_candidate.py`로 실패 모습을 확인한다 |
+| `Every design failed` | 모든 후보의 성공률이 0 | 후보를 더 만들어 평가한다. `trials.csv`의 `closing_shift_mm`, `lift_achieved_mm`, `pad_contact_fraction`과 `view_candidate.py`로 실패 모습을 확인한다 |
 | `This summary.csv was made by the old evaluation protocol` | 평가 방식 변경 전에 만든 `summary.csv` | 새 `--out` 폴더로 다시 평가한다 |
 | `Refusing to overwrite an existing embedding bank` | `--out` 위치에 bank가 이미 있음 | 다른 파일명을 쓰거나 기존 파일을 직접 지운다 |
 | `Existing embedding bank has different training settings/elites` | `run_optimization.py`가 찾은 기존 bank가 지금 설정·elite와 다름 | 그 bank(`.pt`, `.json`)를 지우거나 새 `output_dir` |

@@ -54,11 +54,11 @@
     "support_friction": [0.5, 0.005, 0.0001],
     "hold_s": 3.0,
     "disturbances": [
-      {"start_s": 0.3, "duration_s": 0.3, "force_N": [0.5, 0, 0]},
-      {"start_s": 0.8, "duration_s": 0.3, "force_N": [-0.5, 0, 0]},
-      {"start_s": 1.3, "duration_s": 0.3, "force_N": [0, 0.5, 0]},
-      {"start_s": 1.8, "duration_s": 0.3, "force_N": [0, -0.5, 0]},
-      {"start_s": 2.3, "duration_s": 0.3, "force_N": [0, 0, -0.5]}
+      {"start_s": 0.3, "duration_s": 0.3, "force_N": [2, 0, 0]},
+      {"start_s": 0.8, "duration_s": 0.3, "force_N": [-2, 0, 0]},
+      {"start_s": 1.3, "duration_s": 0.3, "force_N": [0, 2, 0]},
+      {"start_s": 1.8, "duration_s": 0.3, "force_N": [0, -2, 0]},
+      {"start_s": 2.3, "duration_s": 0.3, "force_N": [0, 0, -2]}
     ],
     "measure_last_s": 0.3,
     "sample_interval_s": 0.01,
@@ -69,7 +69,7 @@
     "required_contact_fraction": 0.9,
     "required_pad_contact_fraction": 0.9,
     "success_requires_pad_contact": false,
-    "object_mass_kg": 0.1,
+    "object_mass_kg": 0.3,
     "object_friction": [1.0, 0.005, 0.0001],
     "position_x_m": -0.075,
     "position_z_m": 0.16,
@@ -77,21 +77,21 @@
     "yaw_jitter_deg": 10.0,
     "pose_seed": 314159,
     "train": [
-      {"name": "cylinder_r18", "type": "cylinder", "size": [0.018, 0.019], "position_x_m": -0.0590},
-      {"name": "cylinder_r24", "type": "cylinder", "size": [0.024, 0.019], "position_x_m": -0.0490},
-      {"name": "cylinder_r30", "type": "cylinder", "size": [0.030, 0.019], "position_x_m": -0.0775},
-      {"name": "sphere_r22", "type": "sphere", "size": [0.022], "position_x_m": -0.0765},
-      {"name": "box_36x28", "type": "box", "size": [0.018, 0.014, 0.019], "position_x_m": -0.0500},
-      {"name": "box_50x36", "type": "box", "size": [0.025, 0.018, 0.019], "position_x_m": -0.0400},
-      {"name": "ellipsoid_52x36", "type": "ellipsoid", "size": [0.026, 0.018, 0.019], "position_x_m": -0.0500},
-      {"name": "capsule_r15", "type": "capsule", "size": [0.015, 0.014], "position_x_m": -0.0725}
+      {"name": "cylinder_r28", "type": "cylinder", "size": [0.028, 0.019], "position_x_m": -0.0475},
+      {"name": "cylinder_r31", "type": "cylinder", "size": [0.031, 0.019], "position_x_m": -0.0400},
+      {"name": "sphere_r29", "type": "sphere", "size": [0.029], "position_x_m": -0.0475},
+      {"name": "sphere_r33", "type": "sphere", "size": [0.033], "position_x_m": -0.0520},
+      {"name": "box_36x52", "type": "box", "size": [0.018, 0.026, 0.019], "position_x_m": -0.0460},
+      {"name": "box_32x56", "type": "box", "size": [0.016, 0.028, 0.019], "position_x_m": -0.0415},
+      {"name": "box_30x60", "type": "box", "size": [0.015, 0.03, 0.019], "position_x_m": -0.0460},
+      {"name": "ellipsoid_60x56", "type": "ellipsoid", "size": [0.03, 0.028, 0.019], "position_x_m": -0.0355}
     ],
     "validation": [
-      {"name": "unseen_cylinder_r21", "type": "cylinder", "size": [0.021, 0.019], "position_x_m": -0.0560},
-      {"name": "unseen_cylinder_r27", "type": "cylinder", "size": [0.027, 0.019], "position_x_m": -0.0660},
-      {"name": "unseen_sphere_r25", "type": "sphere", "size": [0.025], "position_x_m": -0.0760},
-      {"name": "unseen_box_44x32", "type": "box", "size": [0.022, 0.016, 0.019], "position_x_m": -0.0485},
-      {"name": "unseen_ellipsoid_60x32", "type": "ellipsoid", "size": [0.030, 0.016, 0.019], "position_x_m": -0.0410}
+      {"name": "unseen_cylinder_r29", "type": "cylinder", "size": [0.029, 0.019], "position_x_m": -0.0475},
+      {"name": "unseen_sphere_r31", "type": "sphere", "size": [0.031], "position_x_m": -0.0490},
+      {"name": "unseen_box_36x56", "type": "box", "size": [0.018, 0.028, 0.019], "position_x_m": -0.0430},
+      {"name": "unseen_box_40x52", "type": "box", "size": [0.02, 0.026, 0.019], "position_x_m": -0.0505},
+      {"name": "unseen_ellipsoid_64x58", "type": "ellipsoid", "size": [0.032, 0.029, 0.019], "position_x_m": -0.0370}
     ]
   }
 }

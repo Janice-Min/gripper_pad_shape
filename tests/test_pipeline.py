@@ -108,11 +108,29 @@ class PipelineTests(unittest.TestCase):
         self.assertGreater(row["initial_penetration_mm"], 7)
 
     def test_position_calibration_codes(self):
-        from calibrate_positions import classify, longest_run
+        from calibrate_positions import classify, classify_envelop, longest_run, choose
         self.assertEqual(classify(["upper_pad", "lower_pad"]), "B")
         self.assertEqual(classify(["upper_pad", "lower_pad", "link"]), "b")
         self.assertEqual(classify(["link"]), "L")
+        links = ["upper_link1", "upper_link2", "lower_link1", "lower_link2"]
+        self.assertEqual(classify_envelop(["upper_pad", "lower_pad", "link"], links), "E")
+        self.assertEqual(classify_envelop(["upper_pad", "link"], links), "e")
+        self.assertEqual(classify_envelop(["upper_pad", "lower_pad"], links[1::2]), "B")
         self.assertEqual(longest_run([1, 2, 3, 4, 5], list("BB-BB"), {"B"}), [1, 2])
+        xs = [-.040, -.045, -.050, -.055]
+        self.assertEqual(choose(xs, list("EEBB"), "envelop", "pad"), (-.040, "envelop"))
+        self.assertEqual(choose(xs, list("-BB-"), "envelop", "pad"), (-.045, "pad"))
+        self.assertEqual(choose(xs, list("-BB-"), "envelop", "keep"), (None, "keep"))
+
+    def test_configured_objects_are_enveloped(self):
+        # Every configured object must start free of overlap and be touched by all four links when closed.
+        from calibrate_positions import classify_envelop
+        for suite in ("train", "validation"):
+            for index, case in enumerate(self.cfg["evaluation"][suite]):
+                m, d = compile_case(self.cfg, self.candidate, case)
+                row = single_trial(self.cfg, m, d, *case_pose(self.cfg, index, 0, suite), until="closing")
+                self.assertEqual(row["status"], "closed", case["name"])
+                self.assertEqual(classify_envelop(row["closing_contacts"], row["closing_bodies"]), "E", case["name"])
 
     def test_common_poses_and_source_guard(self):
         for a, b in zip(case_pose(self.cfg, 1, 2, "train"), case_pose(self.cfg, 1, 2, "train")):

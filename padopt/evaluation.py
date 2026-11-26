@@ -183,18 +183,21 @@ def single_trial(cfg, model, data, pos, quat, visualize=False, until=None):
                 lift_start_z = float(data.xpos[obj][2])
                 result["closing_shift_mm"] = float(np.linalg.norm(rel - start_rel) * 1000)
                 if until == "closing":
-                    touching = set()
+                    touching, bodies = set(), set()
                     for c in data.contact:
                         if c.dist <= 0 and objgeom in (c.geom1, c.geom2):
                             other = c.geom2 if c.geom1 == objgeom else c.geom1
                             body = int(model.geom_bodyid[other])
+                            if body in upper | lower or body == base:
+                                bodies.add(mj.mj_id2name(model, mj.mjtObj.mjOBJ_BODY, body))
                             if other in upper_pad:
                                 touching.add("upper_pad")
                             elif other in lower_pad:
                                 touching.add("lower_pad")
                             elif body in upper | lower or body == base:
                                 touching.add("link")
-                    return {**result, "status": "closed", "closing_contacts": sorted(touching)}
+                    # closing_contacts: pads vs other finger geoms; closing_bodies: every gripper body touched
+                    return {**result, "status": "closed", "closing_contacts": sorted(touching), "closing_bodies": sorted(bodies)}
             drift = float(np.linalg.norm(rel - reference[0]))
             if model.geom_type[objgeom] == mj.mjtGeom.mjGEOM_SPHERE:
                 rotation = 0.0  # Sphere orientation is physically indistinguishable.
