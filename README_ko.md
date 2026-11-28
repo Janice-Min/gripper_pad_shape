@@ -184,7 +184,7 @@ gripper_pad_shape/
 ├─ inspect_gripper.py         패드 설계 영역 치수 확인
 ├─ make_baselines.py          평면 패드 대조군 생성
 ├─ generate_pads.py           Shap-E 패드 후보 생성
-├─ preview_pads.py            후보 두께 지도 그림
+├─ preview_pads.py            후보·elite 패드 형상 그림 (3D 입체, 두께 지도)
 ├─ preview_mount.py           open 자세 부착 위치 단면도
 ├─ build_gripper.py           후보 XML 재생성
 ├─ calibrate_positions.py     물체를 enveloping(링크 4개 접촉) 위치에 놓도록 x 위치 결정
@@ -306,20 +306,31 @@ python generate_pads.py --round 1 --count 100 --embedding runs/round_000/next_em
 
 실행 중 나오는 `custom_fwd`/`custom_bwd`, `torch.jit.load` FutureWarning과 `No module named 'pytorch3d'` 경고는 무시해도 된다. 메시 추출은 PyTorch 기본 렌더러로 정상 처리된다.
 
-### 4-4. `preview_pads.py` — 두께 지도 그림
+### 4-4. `preview_pads.py` — 패드 형상 그림
 
-완성된 후보들의 두께 지도를 한 장의 PNG로 그린다(한 줄에 4개). 가로축은 distal 관절로부터의 거리, 세로축은 패드 폭 방향이다. **시뮬레이션에서 폭 방향은 세로(위아래, 중력 방향)이고 Width +가 위쪽이다.** Shap-E·MuJoCo 없이 실행된다.
+여러 패드의 형상을 한 장의 PNG로 그린다(한 줄에 4개). Shap-E·MuJoCo 없이 실행된다.
+
+- `--round-dir`: round 폴더의 후보를 번호 순서대로 그린다.
+- `--elites`: `select_elites.py`가 만든 `elites.json`의 후보를 **등수 순서대로** 그리고, 제목에 등수·후보 이름·평균 점수·가장 약한 물체 점수를 적는다.
+- `--view solid`(기본): **실제 패드 입체 형상**(STL과 같은 모양)을 3D로 그린다. 바닥면은 distal 링크 캡슐(빨간 윤곽선)에 맞춰 굽어 있고, 윗면(물체에 닿는 면)은 두께에 따라 색칠된다. 축은 관절로부터의 거리, 폭(+가 위쪽), 링크 축으로부터의 높이(mm)다.
+- `--view surface`: 두께만 3D 표면 그래프로 그린다(바닥을 평평하게 펴서 본 모양).
+- `--view map`: 두께 지도. 가로축은 distal 관절로부터의 거리, 세로축은 패드 폭 방향이다. **시뮬레이션에서 폭 방향은 세로(위아래, 중력 방향)이고 Width +가 위쪽이다.**
 
 | 옵션 | 기본값 | 설명 |
 |---|---|---|
-| `--round-dir` | 필수 | round 폴더 |
-| `--count` | `12` | 앞에서부터 그릴 후보 수 |
+| `--config` | `config.json` | 색 범위(`pad`의 두께 최소·최대)를 읽는다 |
+| `--round-dir` | — | round 폴더 |
+| `--elites` | — | `elites.json` 경로 |
+| `--count` | `12` | 그릴 후보 수 (round: 번호 앞에서부터, elites: 1등부터) |
+| `--view` | `solid` | `solid`(패드 입체), `surface`(두께 3D 그래프), `map`(두께 지도) |
 | `--out` | 필수 | 저장할 PNG 경로 |
 
-색 범위는 1.5~5.5 mm로 고정되어 있다. `pad`의 두께 범위를 바꾸면 그림의 색 범위는 따라 바뀌지 않는다.
+`--round-dir`와 `--elites` 중 **하나는 반드시** 지정한다.
 
 ```powershell
 python preview_pads.py --round-dir runs/round_000 --count 12 --out runs/round_000/preview.png
+python preview_pads.py --elites runs/round_000/elites.json --out runs/round_000/elites_3d.png
+python preview_pads.py --elites runs/round_000/elites.json --view map --out runs/round_000/elites_map.png
 ```
 
 ### 4-5. `preview_mount.py` — 부착 위치 단면도
@@ -533,6 +544,8 @@ python evaluate_pads.py --config config_light.json --candidate runs/round_000/pa
 python select_elites.py --summary runs/round_000/eval_train/summary.csv --out runs/round_000/elites.json
 python select_elites.py --summary runs/round_000/eval_train/summary.csv --count 5 --show 30 --out runs/round_000/elites_top5.json
 ```
+
+고른 elite의 형상은 `python preview_pads.py --elites runs/round_000/elites.json --out runs/round_000/elites_3d.png`로 한 장에 3D로 볼 수 있다(4-4).
 
 ### 4-10. `optimize_embeddings.py` — 조건 임베딩 학습
 

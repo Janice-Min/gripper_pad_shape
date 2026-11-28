@@ -5,7 +5,9 @@ import time
 from padopt.common import read_config
 from padopt.evaluation import compile_case, case_pose, single_trial, phase_at, protocol_times
 
-
+"""
+python view_candidate.py --candidate runs/round_000/pad_0000 --case 1 --slow 4
+"""
 class PacedViewer:
     """Viewer-only wrapper: real-time playback, phase display, and the window stays open.
 
